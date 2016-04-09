@@ -59,28 +59,57 @@ public class RNNetworkInfo extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void getIPAddress(final Callback callback) {
-      String ipAddressString = null;
+    WifiInfo info = wifi.getConnectionInfo();
 
-      try {
-          mainLoop:
-          for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
-              NetworkInterface intf = en.nextElement();
+    // The following is courtesy of Digital Rounin at
+    //   http://stackoverflow.com/a/18638588 .
 
-              for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
-                  InetAddress inetAddress = enumIpAddr.nextElement();
+    // The endian-ness of `ip` is potentially varying, but we need it to be big-
+    // endian.
+    int ip = info.getIpAddress();
 
-                  if (!inetAddress.isLoopbackAddress() && inetAddress instanceof Inet4Address) {
-                      ipAddressString = inetAddress.getHostAddress().toString();
+    // Convert little-endian to big-endian if needed.
+    if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
+        ip = Integer.reverseBytes(ip);
+    }
 
-                      break mainLoop;
-                  }
-              }
-          }
-      } catch (SocketException ex) {
-          Log.e(TAG, ex.toString());
-      }
+    // Now that the value is guaranteed to be big-endian, we can convert it to
+    // an array whose first element is the high byte.
+    byte[] ipByteArray = BigInteger.valueOf(ip).toByteArray();
 
-      callback.invoke(ipAddressString);
+    String ipAddressString;
+    try {
+        // `getByAddress()` wants network byte-order, aka big-endian. 
+        // Good thing we planned ahead!
+        ipAddressString = InetAddress.getByAddress(ipByteArray).getHostAddress();
+    } catch (UnknownHostException ex) {
+        Log.e(TAG, "Unable to determine IP address.");
+        ipAddressString = null;
+    }
+    
+    callback.invoke(ipAddressString);
+      // String ipAddressString = null;
+
+      // try {
+      //     mainLoop:
+      //     for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+      //         NetworkInterface intf = en.nextElement();
+
+      //         for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+      //             InetAddress inetAddress = enumIpAddr.nextElement();
+
+      //             if (!inetAddress.isLoopbackAddress() && inetAddress instanceof Inet4Address) {
+      //                 ipAddressString = inetAddress.getHostAddress().toString();
+
+      //                 break mainLoop;
+      //             }
+      //         }
+      //     }
+      // } catch (SocketException ex) {
+      //     Log.e(TAG, ex.toString());
+      // }
+
+      // callback.invoke(ipAddressString);
   }
 
   @ReactMethod
