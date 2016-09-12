@@ -21,32 +21,32 @@ RCT_EXPORT_METHOD(getSSID:(RCTResponseSenderBlock)callback)
 {
     NSArray *interfaceNames = CFBridgingRelease(CNCopySupportedInterfaces());
     NSLog(@"%s: Supported interfaces: %@", __func__, interfaceNames);
-    
+
     NSDictionary *SSIDInfo;
     NSString *SSID = @"error";
-    
+
     for (NSString *interfaceName in interfaceNames) {
         SSIDInfo = CFBridgingRelease(CNCopyCurrentNetworkInfo((__bridge CFStringRef)interfaceName));
-        
+
         if (SSIDInfo.count > 0) {
             SSID = SSIDInfo[@"SSID"];
             break;
         }
     }
-    
+
     callback(@[SSID]);
 }
 
 RCT_EXPORT_METHOD(getIPAddress:(RCTResponseSenderBlock)callback)
 {
     NSString *address = @"error";
-    
+
     struct ifaddrs *interfaces = NULL;
     struct ifaddrs *temp_addr = NULL;
     int success = 0;
-    
+
     success = getifaddrs(&interfaces);
-    
+
     if (success == 0) {
         temp_addr = interfaces;
         while(temp_addr != NULL) {
@@ -58,21 +58,19 @@ RCT_EXPORT_METHOD(getIPAddress:(RCTResponseSenderBlock)callback)
             temp_addr = temp_addr->ifa_next;
         }
     }
-    
+
     freeifaddrs(interfaces);
     callback(@[address]);
 }
 
 RCT_EXPORT_METHOD(ping:(NSString *)url callback:(RCTResponseSenderBlock)callback)
 {
-    bool found = false;
-    
     // struct ifaddrs *interfaces = NULL;
     // struct ifaddrs *temp_addr = NULL;
     // int success = 0;
-    
+
     // success = getifaddrs(&interfaces);
-    
+
     // if (success == 0) {
     //     temp_addr = interfaces;
     //     while(temp_addr != NULL) {
@@ -84,22 +82,30 @@ RCT_EXPORT_METHOD(ping:(NSString *)url callback:(RCTResponseSenderBlock)callback
     //         temp_addr = temp_addr->ifa_next;
     //     }
     // }
-    
+
     // freeifaddrs(interfaces);
 
+	bool found = false;
     callback(@[@(found)]);
 }
 
 RCT_EXPORT_METHOD(wake:(NSString *)mac ip:(NSString *)ip callback:(RCTResponseSenderBlock)callback)
 {
     NSString *formattedMac = @"error";
-    
+
+	unsigned char *broadcast_addr = (unsigned char*)[ip UTF8String];
+    unsigned char *mac_addr = (unsigned char*)[mac UTF8String];
+
+    if (send_wol_packet(broadcast_addr, mac_addr)) {
+        formattedMac = @"ok";
+    }
+
     // struct ifaddrs *interfaces = NULL;
     // struct ifaddrs *temp_addr = NULL;
     // int success = 0;
-    
+
     // success = getifaddrs(&interfaces);
-    
+
     // if (success == 0) {
     //     temp_addr = interfaces;
     //     while(temp_addr != NULL) {
@@ -111,11 +117,10 @@ RCT_EXPORT_METHOD(wake:(NSString *)mac ip:(NSString *)ip callback:(RCTResponseSe
     //         temp_addr = temp_addr->ifa_next;
     //     }
     // }
-    
+
     // freeifaddrs(interfaces);
 
     callback(@[formattedMac]);
 }
 
 @end
-

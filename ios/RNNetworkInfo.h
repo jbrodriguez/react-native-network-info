@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <RCTBridge.h>
+#import "wol.h"
 
 @interface RNNetworkInfo : NSObject<RCTBridgeModule>
 
