@@ -142,7 +142,7 @@ RCT_EXPORT_METHOD(getIPAddress:(RCTResponseSenderBlock)callback)
     callback(@[address]);
 }
 
-RCT_EXPORT_METHOD(ping:(NSString *)url callback:(RCTResponseSenderBlock)callback)
+RCT_EXPORT_METHOD(ping:(NSString *)hostName callback:(RCTResponseSenderBlock)callback)
 {
     self.pinger = [[SimplePing alloc] initWithHostName:hostName];
     self.pinger.delegate = self;
