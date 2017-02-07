@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <RCTBridge.h>
+#import <React/RCTBridge.h>
 #import "wol.h"
 #import "SimplePing.h"
 
