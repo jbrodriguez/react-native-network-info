@@ -1,10 +1,15 @@
 'use strict';
 
-var RNNetworkInfo = require('react-native').NativeModules.RNNetworkInfo;
+const { NativeModules } = require('react-native');
+const { RNNetworkInfo } = NativeModules;
 
-var NetworkInfo = {
+const NetworkInfo = {
   getSSID(ssid) {
     RNNetworkInfo.getSSID(ssid);
+  },
+
+  getBSSID(bssid) {
+    RNNetworkInfo.getBSSID(bssid);
   },
 
   getIPAddress(ip) {
@@ -17,7 +22,7 @@ var NetworkInfo = {
 
   wake(mac, ip, formattedMac) {
   	RNNetworkInfo.wake(mac, ip, formattedMac)
-  }  
-};
+  }
+}
 
-module.exports = NetworkInfo;
+module.exports = { NetworkInfo }

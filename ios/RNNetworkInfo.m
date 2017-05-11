@@ -24,20 +24,20 @@ static NSString * displayAddressForAddress(NSData * address) {
     int         err;
     NSString *  result;
     char        hostStr[NI_MAXHOST];
-    
+
     result = nil;
-    
+
     if (address != nil) {
         err = getnameinfo(address.bytes, (socklen_t) address.length, hostStr, sizeof(hostStr), NULL, 0, NI_NUMERICHOST);
         if (err == 0) {
             result = @(hostStr);
         }
     }
-    
+
     if (result == nil) {
         result = @"?";
     }
-    
+
     return result;
 }
 
@@ -51,13 +51,13 @@ static NSString * shortErrorFromError(NSError * error) {
     NSNumber *      failureNum;
     int             failure;
     const char *    failureStr;
-    
+
     assert(error != nil);
-    
+
     result = nil;
-    
+
     // Handle DNS errors as a special case.
-    
+
     if ( [error.domain isEqual:(NSString *)kCFErrorDomainCFNetwork] && (error.code == kCFHostErrorUnknown) ) {
         failureNum = error.userInfo[(id) kCFGetAddrInfoFailureKey];
         if ( [failureNum isKindOfClass:[NSNumber class]] ) {
@@ -70,9 +70,9 @@ static NSString * shortErrorFromError(NSError * error) {
             }
         }
     }
-    
+
     // Otherwise try various properties of the error object.
-    
+
     if (result == nil) {
         result = error.localizedFailureReason;
     }
@@ -99,7 +99,6 @@ RCT_EXPORT_MODULE();
 RCT_EXPORT_METHOD(getSSID:(RCTResponseSenderBlock)callback)
 {
     NSArray *interfaceNames = CFBridgingRelease(CNCopySupportedInterfaces());
-    NSLog(@"%s: Supported interfaces: %@", __func__, interfaceNames);
 
     NSDictionary *SSIDInfo;
     NSString *SSID = @"error";
@@ -114,6 +113,24 @@ RCT_EXPORT_METHOD(getSSID:(RCTResponseSenderBlock)callback)
     }
 
     callback(@[SSID]);
+}
+
+RCT_EXPORT_METHOD(getBSSID:(RCTResponseSenderBlock)callback)
+{
+    NSArray *interfaceNames = CFBridgingRelease(CNCopySupportedInterfaces());
+    NSString *BSSID = @"error";
+
+    for (NSString* interface in interfaceNames)
+    {
+        CFDictionaryRef networkDetails = CNCopyCurrentNetworkInfo((CFStringRef) interface);
+        if (networkDetails)
+        {
+            BSSID = (NSString *)CFDictionaryGetValue (networkDetails, kCNNetworkInfoKeyBSSID);
+            CFRelease(networkDetails);
+        }
+    }
+
+    callback(@[BSSID]);
 }
 
 RCT_EXPORT_METHOD(getIPAddress:(RCTResponseSenderBlock)callback)
@@ -147,9 +164,9 @@ RCT_EXPORT_METHOD(ping:(NSString *)hostName callback:(RCTResponseSenderBlock)cal
     self.pinger = [[SimplePing alloc] initWithHostName:hostName];
     self.pinger.delegate = self;
     self.callback = callback;
-    
+
     [self.pinger start];
-    
+
     do {
         [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
     } while (self.pinger != nil);
@@ -198,12 +215,12 @@ RCT_EXPORT_METHOD(wake:(NSString *)mac ip:(NSString *)ip callback:(RCTResponseSe
 #pragma unused(pinger)
     assert(pinger == self.pinger);
     assert(address != nil);
-    
+
     NSLog(@"pinging %@", displayAddressForAddress(address));
-    
+
     // Send the first ping straight away.
     [self sendPing];
-    
+
     // // And start a timer to send the subsequent pings.
     //
     // assert(self.sendTimer == nil);
@@ -214,16 +231,16 @@ RCT_EXPORT_METHOD(wake:(NSString *)mac ip:(NSString *)ip callback:(RCTResponseSe
 #pragma unused(pinger)
     assert(pinger == self.pinger);
     NSLog(@"failed: %@", shortErrorFromError(error));
-    
+
     // [self.sendTimer invalidate];
     // self.sendTimer = nil;
-    
+
     // No need to call -stop.  The pinger will stop itself in this case.
     // We do however want to nil out pinger so that the runloop stops.
-    
+
     bool found = false;
     self.callback(@[@(found)]);
-    
+
     [self.sendTimer invalidate];
     self.sendTimer = nil;
     self.pinger = nil;
@@ -234,7 +251,7 @@ RCT_EXPORT_METHOD(wake:(NSString *)mac ip:(NSString *)ip callback:(RCTResponseSe
     assert(pinger == self.pinger);
 #pragma unused(packet)
     NSLog(@"#%u sent", (unsigned int) sequenceNumber);
-    
+
     assert(self.sendTimer == nil);
     self.sendTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(timerFired:) userInfo:nil repeats:NO];
 }
@@ -244,10 +261,10 @@ RCT_EXPORT_METHOD(wake:(NSString *)mac ip:(NSString *)ip callback:(RCTResponseSe
     assert(pinger == self.pinger);
 #pragma unused(packet)
     NSLog(@"#%u send failed: %@", (unsigned int) sequenceNumber, shortErrorFromError(error));
-    
+
     bool found = false;
     self.callback(@[@(found)]);
-    
+
     [self.sendTimer invalidate];
     self.sendTimer = nil;
     self.pinger = nil;
@@ -258,10 +275,10 @@ RCT_EXPORT_METHOD(wake:(NSString *)mac ip:(NSString *)ip callback:(RCTResponseSe
     assert(pinger == self.pinger);
 #pragma unused(packet)
     NSLog(@"#%u received, size=%zu", (unsigned int) sequenceNumber, (size_t) packet.length);
-    
+
     bool found = true;
     self.callback(@[@(found)]);
-    
+
     [self.sendTimer invalidate];
     self.sendTimer = nil;
     self.pinger = nil;
@@ -270,12 +287,12 @@ RCT_EXPORT_METHOD(wake:(NSString *)mac ip:(NSString *)ip callback:(RCTResponseSe
 - (void)simplePing:(SimplePing *)pinger didReceiveUnexpectedPacket:(NSData *)packet {
 #pragma unused(pinger)
     assert(pinger == self.pinger);
-    
+
     NSLog(@"unexpected packet, size=%zu", (size_t) packet.length);
-    
+
     bool found = false;
     self.callback(@[@(found)]);
-    
+
     [self.sendTimer invalidate];
     self.sendTimer = nil;
     self.pinger = nil;
@@ -284,10 +301,10 @@ RCT_EXPORT_METHOD(wake:(NSString *)mac ip:(NSString *)ip callback:(RCTResponseSe
 - (void)timerFired:(NSTimer *)timer {
     NSLog(@"ping timeout occurred, host not reachable");
     // Move to next host
-    
+
     bool found = false;
     self.callback(@[@(found)]);
-    
+
     [self.sendTimer invalidate];
     self.sendTimer = nil;
     self.pinger = nil;
