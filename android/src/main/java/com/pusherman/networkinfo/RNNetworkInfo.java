@@ -81,13 +81,15 @@ public class RNNetworkInfo extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void ping(final String url, final Callback callback) {
+  public void ping(final String url, final Integer timeout, final Callback callback) {
       boolean found = false;
 
       Runtime runtime = Runtime.getRuntime();
       try
       {
-          Process  mIpAddrProcess = java.lang.Runtime.getRuntime().exec("/system/bin/ping -c1 -W1 " + url);
+
+          String command = String.format("/system/bin/ping -c1 -W %d %s", timeout / 1000, url);
+          Process  mIpAddrProcess = java.lang.Runtime.getRuntime().exec(command);
           int returnVal = mIpAddrProcess.waitFor();
           found = (returnVal==0);
       }

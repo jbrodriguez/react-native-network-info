@@ -159,11 +159,12 @@ RCT_EXPORT_METHOD(getIPAddress:(RCTResponseSenderBlock)callback)
     callback(@[address]);
 }
 
-RCT_EXPORT_METHOD(ping:(NSString *)hostName callback:(RCTResponseSenderBlock)callback)
+RCT_EXPORT_METHOD(ping:(NSString *)hostName timeout:(nonnull NSNumber *)timeout callback:(RCTResponseSenderBlock)callback)
 {
     self.pinger = [[SimplePing alloc] initWithHostName:hostName];
     self.pinger.delegate = self;
     self.callback = callback;
+    self.timeout = timeout;
 
     [self.pinger start];
 
@@ -253,7 +254,8 @@ RCT_EXPORT_METHOD(wake:(NSString *)mac ip:(NSString *)ip callback:(RCTResponseSe
     NSLog(@"#%u sent", (unsigned int) sequenceNumber);
 
     assert(self.sendTimer == nil);
-    self.sendTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(timerFired:) userInfo:nil repeats:NO];
+    double tmout = [self.timeout doubleValue] / 1000; // timeout is passed in milliseconds
+    self.sendTimer = [NSTimer scheduledTimerWithTimeInterval:tmout target:self selector:@selector(timerFired:) userInfo:nil repeats:NO];
 }
 
 - (void)simplePing:(SimplePing *)pinger didFailToSendPacket:(NSData *)packet sequenceNumber:(uint16_t)sequenceNumber error:(NSError *)error {
@@ -299,7 +301,7 @@ RCT_EXPORT_METHOD(wake:(NSString *)mac ip:(NSString *)ip callback:(RCTResponseSe
 }
 
 - (void)timerFired:(NSTimer *)timer {
-    NSLog(@"ping timeout occurred, host not reachable");
+    NSLog(@"ping timeout occurred, host not reachable: %d", [self.timeout integerValue]);
     // Move to next host
 
     bool found = false;
