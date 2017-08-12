@@ -1,3 +1,15 @@
+## 3.0.0 - 2017-08-07 (Flapjack)
+
+### Breaking Changes
+- Updated to support React Native 0.47
+
+
+## 2.2.0 - 2017-05-23 (Juggernaut)
+
+### Features
+- (Android) Added method for getting IPv4 address (thanks @davidstoneham)
+
+
 ## 2.1.0 - 2017-04-28 (City Slicker)
 
 ### Features

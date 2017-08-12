@@ -15,6 +15,7 @@ import java.net.UnknownHostException;
 import java.net.SocketException;
 import java.nio.ByteOrder;
 import java.util.Map;
+import java.net.NetworkInterface;
 import java.util.Enumeration;
 import java.net.NetworkInterface;
 import java.lang.Runtime;
@@ -70,6 +71,27 @@ public class RNNetworkInfo extends ReactContextBaseJavaModule {
           InetAddress inetAddress = enumIpAddr.nextElement();
           if (!inetAddress.isLoopbackAddress()) {
             ipAddress = inetAddress.getHostAddress();
+          }
+        }
+      }
+    } catch (Exception ex) {
+      Log.e(TAG, ex.toString());
+    }
+
+    callback.invoke(ipAddress);
+  }
+
+  @ReactMethod
+  public void getIPV4Address(final Callback callback) {
+    String ipAddress = null;
+
+    try {
+      for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+        NetworkInterface intf = en.nextElement();
+        for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+          InetAddress inetAddress = enumIpAddr.nextElement();
+          if (!inetAddress.isLoopbackAddress() && inetAddress instanceof Inet4Address) {
+            ipAddress = inetAddress.getHostAddress().toString();
           }
         }
       }

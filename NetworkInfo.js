@@ -1,6 +1,6 @@
 'use strict'
 
-const { NativeModules } = require('react-native')
+import { NativeModules } from 'react-native'
 const { RNNetworkInfo } = NativeModules
 
 const NetworkInfo = {
@@ -14,6 +14,10 @@ const NetworkInfo = {
 
 	getIPAddress(ip) {
 		RNNetworkInfo.getIPAddress(ip)
+	},
+
+	getIPV4Address(ip) {
+		RNNetworkInfo.getIPV4Address(ip)
 	},
 
 	ping(url, timeout, found) {
