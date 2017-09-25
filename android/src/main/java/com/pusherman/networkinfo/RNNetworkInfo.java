@@ -144,4 +144,24 @@ public class RNNetworkInfo extends ReactContextBaseJavaModule {
 
     callback.invoke(formattedMac);
   }
+
+  @ReactMethod
+  public void poke(final String ip, final Integer port, final Integer timeout, final Callback callback) {
+    boolean found = false;
+
+    try {
+        Socket socket = new Socket();
+        socket.connect(new InetSocketAddress(ip, port), timeout);
+        socket.close();
+        found = true;
+    } catch(ConnectException ce){
+        ce.printStackTrace();
+        System.out.println(" Exception:"+ce);
+    } catch (Exception ex) {
+        System.out.println(" Exception:"+ex);
+        ex.printStackTrace();
+    }
+
+    callback.invoke(found);
+  }  
 }

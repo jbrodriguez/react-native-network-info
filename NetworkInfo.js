@@ -27,6 +27,10 @@ const NetworkInfo = {
 	wake(mac, ip, formattedMac) {
 		RNNetworkInfo.wake(mac, ip, formattedMac)
 	},
+
+	poke(ip, port, timeout, found) {
+		RNNetworkInfo.ping(url, timeout, found)
+	},
 }
 
 module.exports = { NetworkInfo }

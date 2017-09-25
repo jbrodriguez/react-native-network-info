@@ -159,6 +159,20 @@ RCT_EXPORT_METHOD(getIPAddress:(RCTResponseSenderBlock)callback)
     callback(@[address]);
 }
 
+RCT_EXPORT_METHOD(wake:(NSString *)mac ip:(NSString *)ip callback:(RCTResponseSenderBlock)callback)
+{
+    NSString *formattedMac = @"error";
+
+	unsigned char *broadcast_addr = (unsigned char*)[ip UTF8String];
+    unsigned char *mac_addr = (unsigned char*)[mac UTF8String];
+
+    if (send_wol_packet(broadcast_addr, mac_addr)) {
+        formattedMac = @"ok";
+    }
+
+    callback(@[formattedMac]);
+}
+
 RCT_EXPORT_METHOD(ping:(NSString *)hostName timeout:(nonnull NSNumber *)timeout callback:(RCTResponseSenderBlock)callback)
 {
     self.pinger = [[SimplePing alloc] initWithHostName:hostName];
@@ -171,40 +185,6 @@ RCT_EXPORT_METHOD(ping:(NSString *)hostName timeout:(nonnull NSNumber *)timeout 
     do {
         [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
     } while (self.pinger != nil);
-}
-
-RCT_EXPORT_METHOD(wake:(NSString *)mac ip:(NSString *)ip callback:(RCTResponseSenderBlock)callback)
-{
-    NSString *formattedMac = @"error";
-
-	unsigned char *broadcast_addr = (unsigned char*)[ip UTF8String];
-    unsigned char *mac_addr = (unsigned char*)[mac UTF8String];
-
-    if (send_wol_packet(broadcast_addr, mac_addr)) {
-        formattedMac = @"ok";
-    }
-
-    // struct ifaddrs *interfaces = NULL;
-    // struct ifaddrs *temp_addr = NULL;
-    // int success = 0;
-
-    // success = getifaddrs(&interfaces);
-
-    // if (success == 0) {
-    //     temp_addr = interfaces;
-    //     while(temp_addr != NULL) {
-    //         if(temp_addr->ifa_addr->sa_family == AF_INET) {
-    //             if([[NSString stringWithUTF8String:temp_addr->ifa_name] isEqualToString:@"en0"]) {
-    //                 address = [NSString stringWithUTF8String:inet_ntoa(((struct sockaddr_in *)temp_addr->ifa_addr)->sin_addr)];
-    //             }
-    //         }
-    //         temp_addr = temp_addr->ifa_next;
-    //     }
-    // }
-
-    // freeifaddrs(interfaces);
-
-    callback(@[formattedMac]);
 }
 
 - (void)sendPing {
@@ -310,6 +290,46 @@ RCT_EXPORT_METHOD(wake:(NSString *)mac ip:(NSString *)ip callback:(RCTResponseSe
     [self.sendTimer invalidate];
     self.sendTimer = nil;
     self.pinger = nil;
+}
+
+RCT_EXPORT_METHOD(poke:(NSString *)hostName port:(nonnull NSString *)port timeout:(nonnull NSNumber *)timeout callback:(RCTResponseSenderBlock)callback)
+{
+    self.socket = [[GCDAsyncSocket alloc] initWithDelegate:self delegateQueue:dispatch_get_main_queue()];
+    self.callback = callback;
+
+    NSError *err = nil;
+    uint16_t portNum = (uint16_t)[port integerValue];
+    NSTimeInterval interval = [timeout doubleValue];
+
+    if (![socket connectToHost:hostName onPort:portNum withTimeout:interval error:&err]) // Asynchronous!
+    {
+        // If there was an error, it's likely something like "already connected" or "no delegate set"
+        NSLog(@"Couldn't connect socket: %@", err);
+    }
+}
+
+- (void)socket:(GCDAsyncSocket *)sender didConnectToHost:(NSString *)host port:(UInt16)port
+{
+    NSLog(@"Cool, I'm connected! That was easy.");
+
+    bool found = true;
+    self.callback(@[@(found)]);    
+
+    [asyncSocket setDelegate:nil delegateQueue:NULL];
+    [asyncSocket disconnect];
+    [asyncSocket release];    
+}
+
+- (void)socket:(GCDAsyncSocket *)sender socketDidDisconnect:(GCDAsyncSocket *)sock withError:(NSError *)error
+{
+    NSLog(@"Couldn't connect socket: %@", err);
+    
+    bool found = false;
+    self.callback(@[@(found)]);    
+
+    [asyncSocket setDelegate:nil delegateQueue:NULL];
+    [asyncSocket disconnect];
+    [asyncSocket release];    
 }
 
 @end
