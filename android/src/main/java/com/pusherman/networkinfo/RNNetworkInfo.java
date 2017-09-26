@@ -21,6 +21,10 @@ import java.net.NetworkInterface;
 import java.lang.Runtime;
 import java.lang.InterruptedException;
 import java.io.IOException;
+import com.facebook.react.bridge.GuardedAsyncTask;
+import java.net.Socket;
+import java.net.InetSocketAddress;
+import java.net.ConnectException;
 
 import net.mafro.android.wakeonlan.MagicPacket;
 
@@ -146,22 +150,28 @@ public class RNNetworkInfo extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void poke(final String ip, final Integer port, final Integer timeout, final Callback callback) {
-    boolean found = false;
+  public void poke(final String host, final String port, final Integer timeout, final Callback callback) {
+		new GuardedAsyncTask<Void, Void>(getReactApplicationContext()) {
+			@Override
+			protected void doInBackgroundGuarded(Void ...params) {
+        boolean found = false;
+        int portNum = Integer.parseInt(port);
 
-    try {
-        Socket socket = new Socket();
-        socket.connect(new InetSocketAddress(ip, port), timeout);
-        socket.close();
-        found = true;
-    } catch(ConnectException ce){
-        ce.printStackTrace();
-        System.out.println(" Exception:"+ce);
-    } catch (Exception ex) {
-        System.out.println(" Exception:"+ex);
-        ex.printStackTrace();
-    }
+        try {
+            Socket socket = new Socket();
+            socket.connect(new InetSocketAddress(host, portNum), timeout);
+            socket.close();
+            found = true;
+        } catch(ConnectException ce) {
+            // ce.printStackTrace();
+            System.out.println(" Exception:"+ce);
+        } catch (Exception ex) {
+            // ex.printStackTrace();
+            System.out.println(" Exception:"+ex);
+        }
 
-    callback.invoke(found);
+        callback.invoke(found);
+      }
+		}.execute();
   }  
 }
