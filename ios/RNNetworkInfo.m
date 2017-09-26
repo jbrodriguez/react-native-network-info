@@ -294,42 +294,17 @@ RCT_EXPORT_METHOD(ping:(NSString *)hostName timeout:(nonnull NSNumber *)timeout 
 
 RCT_EXPORT_METHOD(poke:(NSString *)hostName port:(nonnull NSString *)port timeout:(nonnull NSNumber *)timeout callback:(RCTResponseSenderBlock)callback)
 {
-    self.socket = [[GCDAsyncSocket alloc] initWithDelegate:self delegateQueue:dispatch_get_main_queue()];
-    self.callback = callback;
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        char *host = (char*)[hostName UTF8String];
+        int portNum = [port intValue];
+        int interval = [timeout intValue];
 
-    NSError *err = nil;
-    uint16_t portNum = (uint16_t)[port integerValue];
-    NSTimeInterval interval = [timeout doubleValue];
+        bool found = !poke(host, portNum, interval);
 
-    if (![socket connectToHost:hostName onPort:portNum withTimeout:interval error:&err]) // Asynchronous!
-    {
-        // If there was an error, it's likely something like "already connected" or "no delegate set"
-        NSLog(@"Couldn't connect socket: %@", err);
-    }
-}
+        NSLog(@"poke(%s)-host(%s)-port(%d)", found ? "true" : "false", host, portNum);
 
-- (void)socket:(GCDAsyncSocket *)sender didConnectToHost:(NSString *)host port:(UInt16)port
-{
-    NSLog(@"Cool, I'm connected! That was easy.");
-
-    bool found = true;
-    self.callback(@[@(found)]);    
-
-    [asyncSocket setDelegate:nil delegateQueue:NULL];
-    [asyncSocket disconnect];
-    [asyncSocket release];    
-}
-
-- (void)socket:(GCDAsyncSocket *)sender socketDidDisconnect:(GCDAsyncSocket *)sock withError:(NSError *)error
-{
-    NSLog(@"Couldn't connect socket: %@", err);
-    
-    bool found = false;
-    self.callback(@[@(found)]);    
-
-    [asyncSocket setDelegate:nil delegateQueue:NULL];
-    [asyncSocket disconnect];
-    [asyncSocket release];    
+        callback(@[@(found)]);
+    });
 }
 
 @end
