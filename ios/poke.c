@@ -63,7 +63,8 @@ int poke(char *host, int port, int timeout)
 
     FD_ZERO(&fdset);
     FD_SET(fd, &fdset);
-    tv.tv_sec = timeout / 1000;
+    double interval = timeout / 1000;
+    tv.tv_sec = interval;
     tv.tv_usec = 0;
 
     rc = select(fd + 1, NULL, &fdset, NULL, &tv);
@@ -74,17 +75,17 @@ int poke(char *host, int port, int timeout)
         getsockopt(fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
 
         if (so_error == 0) {
-			printf("select - socket %s:%d connected.\n", timeout, host, port);
+			printf("select - socket %s:%d connected.\n", host, port);
             close(fd);
             return 0;
         } else { // error
-			printf("socket %s:%d NOT connected: %s\n", timeout, host, port, strerror(so_error));
+			printf("socket %s:%d NOT connected: %s\n", host, port, strerror(so_error));
             close(fd);
 			return 1;
         }
 
     case 0: //timeout
-		fprintf(stderr, "connection timeout %d trying to connect to %s:%d\n", timeout, host, port);
+		fprintf(stderr, "connection timeout %.2f trying to connect to %s:%d\n", interval, host, port);
         close(fd);
 		return 1;
     }
