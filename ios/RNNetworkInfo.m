@@ -10,10 +10,8 @@
 
 #import <ifaddrs.h>
 #import <arpa/inet.h>
-<<<<<<< HEAD
 #import <sys/socket.h>
 #import <netdb.h>
-=======
 #include <net/if.h>
 
 #define IOS_CELLULAR    @"pdp_ip0"
@@ -21,7 +19,6 @@
 //#define IOS_VPN       @"utun0"
 #define IP_ADDR_IPv4    @"ipv4"
 #define IP_ADDR_IPv6    @"ipv6"
->>>>>>> upstream/master
 
 @import SystemConfiguration.CaptiveNetwork;
 
