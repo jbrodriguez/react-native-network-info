@@ -250,8 +250,6 @@ RCT_EXPORT_METHOD(getIPV4Address:(RCTResponseSenderBlock)callback)
         return [addresses count] ? addresses : nil;
     }
 
-@end
-
 - (void)sendPing {
     assert(self.pinger != nil);
     [self.pinger sendPingWithData:nil];
